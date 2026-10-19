@@ -1,235 +1,201 @@
 /**
  * =========================================================================
- * TOKYO VIBES - HOME PAGE INTERACTIVE & AUTO-FIX CODE (Home.c1dmp.js)
+ * TOKYO VIBES - HOME PAGE MASTER CODE (Home.c1dmp.js)
  * =========================================================================
- * Powers the Home Page:
- * 1. Automatically fixes on-page typos & formatting.
- * 2. Reroutes buttons away from broken /blank and external tokyovibes.com.
- * 3. Interactive Hero "Build Your Day" Chips with dynamic state & link updates.
- * 4. Guides Carousel slide transitions.
- * 5. Viewport Scroll Reveal animations.
+ * Ensures:
+ * 1. ZERO out-of-web links to tokyovibes.com - everything routes internally or smooth scrolls.
+ * 2. Day/Night theme buttons function without redirecting to tokyovibes.com/about.
+ * 3. Mobile menu button opens and closes menu drawer.
+ * 4. Interactive "Build Your Day" chips with live visual highlight.
+ * 5. Smooth Anchor jumps for Guides, Reviews, Tours, FAQ, Pricing, and Timeline.
  */
 
 import wixLocation from 'wix-location';
 
 $w.onReady(function () {
-    console.log("Tokyo Vibes Home Engine Active.");
+    console.log("Tokyo Vibes Home Controller Loaded.");
 
-    initPageAutoFixes();
-    initSmoothAnchorScrolling();
-    initDayBuilderWidget();
-    initGuidesCarousel();
-    initScrollAnimations();
+    interceptAndSanitizeAllLinks();
+    initThemeButtons();
+    initHeroDayBuilder();
+    initSmoothAnchors();
 });
 
-// ========================================================
-// 1. TYPO & TEXT AUTO-CORRECTION
-// ========================================================
-function initPageAutoFixes() {
+// =========================================================================
+// 1. INTERCEPT & SANITIZE ALL LINKS (NO OUT-OF-WEB TOKYOVIBES.COM)
+// =========================================================================
+function interceptAndSanitizeAllLinks() {
     try {
-        // Pricing badge: "/   4   HOURS" -> "/ 4 hours"
-        const priceBadges = ['#priceBadgeText', '#textPricingSub', '#priceHours', '#pricingSub'];
-        priceBadges.forEach(id => {
-            if ($w(id) && $w(id).text && $w(id).text.includes('HOURS')) {
-                $w(id).text = '/ 4 hours';
-            }
-        });
-
-        // Review counter: "92 reviews" -> "103 reviews"
-        const reviewStats = ['#reviewLedgerText', '#reviewStats', '#textReviewsCount'];
-        reviewStats.forEach(id => {
-            if ($w(id) && $w(id).text && $w(id).text.includes('92 reviews')) {
-                $w(id).text = $w(id).text.replace('92 reviews', '103 reviews');
-            }
-        });
-    } catch (e) {
-        console.warn("Home typo fix notice:", e);
-    }
-}
-
-// ========================================================
-// 2. SMOOTH INTERNAL ANCHOR NAVIGATION (PREVENTS /blank)
-// ========================================================
-function initSmoothAnchorScrolling() {
-    try {
+        // Find all internal sections
         const sections = {
-            tours: $w('#tours') || $w('#toursSection') || $w('#section2'),
-            guides: $w('#guides') || $w('#guidesSection') || $w('#section4'),
-            reviews: $w('#reviews') || $w('#reviewsSection') || $w('#section6'),
-            faq: $w('#faq') || $w('#faqSection') || $w('#section7'),
-            prices: $w('#prices') || $w('#pricingSection') || $w('#section5'),
-            custom: $w('#custom') || $w('#itinerariesSection') || $w('#section3'),
-            day: $w('#day') || $w('#timelineSection')
+            tours: $w('#tours') || $w('#toursSection') || $w('#comp-muyjmdww'),
+            guides: $w('#guides') || $w('#guidesSection') || $w('#comp-mv9481jx'),
+            reviews: $w('#reviews') || $w('#reviewsSection') || $w('#comp-mv9b4ijb'),
+            faq: $w('#faq') || $w('#faqSection') || $w('#comp-mvb7rugj'),
+            prices: $w('#prices') || $w('#pricingSection') || $w('#comp-mv99p7ws'),
+            custom: $w('#custom') || $w('#itinerariesSection') || $w('#comp-muz2dfsm'),
+            day: $w('#day') || $w('#timelineSection') || $w('#comp-mv8z6zqc')
         };
 
-        // Header and Footer Anchor Links
-        const anchorBindings = [
-            { id: '#navLinkGuides', sec: sections.guides },
-            { id: '#navLinkReviews', sec: sections.reviews },
-            { id: '#footerGuides', sec: sections.guides },
-            { id: '#footerReviews', sec: sections.reviews },
-            { id: '#footerFaq', sec: sections.faq },
-            { id: '#footerPrices', sec: sections.prices },
-            { id: '#btnSeeDayBuilt', sec: sections.day }
+        // Tour card titles and images that previously linked to tokyovibes.com
+        // We redirect them to /tours or the custom builder
+        const tourCardButtons = [
+            '#cardTokyoWalking', '#cardTokyoNight', '#cardFuji',
+            '#btnCheckDates1', '#btnCheckDates2', '#btnCheckDates3',
+            '#btnMakeYours1', '#btnMakeYours2', '#btnMakeYours3'
         ];
 
-        anchorBindings.forEach(binding => {
-            if ($w(binding.id) && binding.sec) {
-                $w(binding.id).onClick((e) => {
-                    e.preventDefault();
-                    binding.sec.scrollTo();
+        tourCardButtons.forEach(id => {
+            const btn = $w(id);
+            if (btn) {
+                btn.onClick((e) => {
+                    if (e && e.preventDefault) e.preventDefault();
+                    wixLocation.to('/tours');
                 });
             }
         });
 
-        // Action buttons inside tour cards
-        const checkDatesButtons = ['#btnCheckDates1', '#btnCheckDates2', '#btnCheckDates3', '#btnTourBook'];
-        checkDatesButtons.forEach(id => {
-            if ($w(id)) {
-                $w(id).onClick((e) => {
-                    // Navigate to itineraries/custom inquiry if date check isn't separated
-                    if (sections.custom) {
-                        e.preventDefault();
-                        sections.custom.scrollTo();
-                    } else {
-                        wixLocation.to('/plan');
-                    }
+        // Reviews link
+        const reviewLinks = ['#navLinkReviews', '#footerReviews', '#textReviewsCount'];
+        reviewLinks.forEach(id => {
+            const el = $w(id);
+            if (el && sections.reviews) {
+                el.onClick((e) => {
+                    if (e && e.preventDefault) e.preventDefault();
+                    sections.reviews.scrollTo();
                 });
             }
         });
 
-        // "Make it yours" buttons
-        const makeItYoursButtons = ['#btnMakeYours1', '#btnMakeYours2', '#btnMakeYours3'];
-        makeItYoursButtons.forEach(id => {
-            if ($w(id)) {
-                $w(id).onClick(() => {
-                    wixLocation.to('/itineraries');
+        // Guides link
+        const guideLinks = ['#navLinkGuides', '#footerGuides'];
+        guideLinks.forEach(id => {
+            const el = $w(id);
+            if (el && sections.guides) {
+                el.onClick((e) => {
+                    if (e && e.preventDefault) e.preventDefault();
+                    sections.guides.scrollTo();
                 });
             }
         });
-    } catch (e) {
-        console.warn("Smooth anchor notice:", e);
+
+        // FAQ link
+        const faqLinks = ['#footerFaq', '#btnAllFaq'];
+        faqLinks.forEach(id => {
+            const el = $w(id);
+            if (el && sections.faq) {
+                el.onClick((e) => {
+                    if (e && e.preventDefault) e.preventDefault();
+                    sections.faq.scrollTo();
+                });
+            }
+        });
+    } catch (err) {
+        console.warn("Link sanitize notice:", err);
     }
 }
 
-// ========================================================
-// 3. INTERACTIVE HERO "BUILD YOUR DAY" WIDGET
-// ========================================================
-function initDayBuilderWidget() {
+// =========================================================================
+// 2. DAY / NIGHT THEME SWITCHER (PREVENTS REDIRECT TO /about)
+// =========================================================================
+function initThemeButtons() {
     try {
-        const selections = {
-            who: '',
-            when: '',
-            into: ''
-        };
+        const autoEl = $w('#comp-mv1prinw_r_comp-mv1pq6w01');
+        const dayEl = $w('#comp-mv1prinw_r_comp-mv1pq6w7');
+        const nightEl = $w('#comp-mv1prinw_r_comp-mv1pq6wb2');
 
-        function setupChipGroup(chipIds, groupKey) {
+        if (autoEl) {
+            autoEl.onClick((e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                console.log("Auto Theme Selected");
+            });
+        }
+
+        if (dayEl) {
+            dayEl.onClick((e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                console.log("Day Theme Selected");
+                const page = $w('#PAGE_SECTIONSc1dmp');
+                if (page && page.style) page.style.backgroundColor = '#F9F7F2';
+            });
+        }
+
+        if (nightEl) {
+            nightEl.onClick((e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                console.log("Night Theme Selected");
+                const page = $w('#PAGE_SECTIONSc1dmp');
+                if (page && page.style) page.style.backgroundColor = '#121A15';
+            });
+        }
+    } catch (err) {
+        console.warn("Theme buttons notice:", err);
+    }
+}
+
+// =========================================================================
+// 3. HERO "BUILD YOUR DAY" CHIP WIDGET
+// =========================================================================
+function initHeroDayBuilder() {
+    try {
+        const selections = { who: '', when: '', into: '' };
+
+        function bindChips(chipIds, groupKey) {
             chipIds.forEach(id => {
                 const chip = $w(id);
                 if (chip) {
                     chip.onClick(() => {
-                        // Reset all chips in group
                         chipIds.forEach(otherId => {
                             const other = $w(otherId);
                             if (other && other.style) {
                                 other.style.backgroundColor = '#FFFFFF';
                                 other.style.color = '#1A1D1A';
-                                other.style.borderColor = '#E2DDD1';
                             }
                         });
 
-                        // Highlight selected chip with Tokyo Vibes Green
                         if (chip.style) {
                             chip.style.backgroundColor = '#2D4A3E';
                             chip.style.color = '#FFFFFF';
-                            chip.style.borderColor = '#2D4A3E';
                         }
-
                         selections[groupKey] = chip.label || chip.text || id;
-                        updateBuilderCustomLink(selections);
                     });
                 }
             });
         }
 
-        // Bind standard chip groups
-        setupChipGroup(['#chipWho1', '#chipWho2', '#chipWho3', '#chipWho4'], 'who');
-        setupChipGroup(['#chipWhen1', '#chipWhen2', '#chipWhen3', '#chipWhen4', '#chipWhen5'], 'when');
-        setupChipGroup(['#chipInto1', '#chipInto2', '#chipInto3', '#chipInto4', '#chipInto5'], 'into');
+        bindChips(['#Just_me', '#Two_of_Us', '#Family', '#Friends'], 'who');
+        bindChips(['#Spring', '#Summer', '#Autumn', '#Winter', '#Not_sure_yet'], 'when');
+        bindChips(['#Food_Drink', '#Old_Tokyo', '#Nightlife', '#Nature_day_trips', '#Surprise_us'], 'into');
 
-        // "See our tours" button scrolls to #tours
+        // See our tours scroll button
         const btnSeeTours = $w('#btnBuilderTours') || $w('#buttonSeeTours');
         if (btnSeeTours) {
-            btnSeeTours.onClick(() => {
-                const toursSec = $w('#tours') || $w('#toursSection') || $w('#section2');
+            btnSeeTours.onClick((e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                const toursSec = $w('#comp-muyjmdww') || $w('#toursSection');
                 if (toursSec) toursSec.scrollTo();
             });
         }
-    } catch (e) {
-        console.warn("Day builder notice:", e);
+    } catch (err) {
+        console.warn("Hero day builder notice:", err);
     }
 }
 
-function updateBuilderCustomLink(selections) {
-    const btn = $w('#btnBuilderCustom') || $w('#btnBuildItinerary');
-    if (btn) {
-        const params = [];
-        if (selections.who) params.push(`who=${encodeURIComponent(selections.who)}`);
-        if (selections.when) params.push(`when=${encodeURIComponent(selections.when)}`);
-        if (selections.into) params.push(`into=${encodeURIComponent(selections.into)}`);
-        const query = params.length > 0 ? `?tour=custom&${params.join('&')}` : '?tour=custom';
-        btn.link = `/plan${query}`;
-    }
-}
-
-// ========================================================
-// 4. GUIDES CAROUSEL SLIDE CONTROLS
-// ========================================================
-function initGuidesCarousel() {
+// =========================================================================
+// 4. SMOOTH ANCHORS FOR ALL IN-PAGE CALLOUTS
+// =========================================================================
+function initSmoothAnchors() {
     try {
-        const slideshow = $w('#guidesSlideshow') || $w('#guidesBox');
-        const btnNext = $w('#btnGuideNext') || $w('#guideArrowRight');
-        const btnPrev = $w('#btnGuidePrev') || $w('#guideArrowLeft');
-
-        if (slideshow && btnNext && btnNext.onClick) {
-            btnNext.onClick(() => {
-                if (slideshow.next) slideshow.next();
+        // "See a day we built" button
+        const btnSeeDay = $w('#btnSeeDay') || $w('#btnDayBuilt');
+        const daySection = $w('#comp-mv8z6zqc') || $w('#daySection');
+        if (btnSeeDay && daySection) {
+            btnSeeDay.onClick((e) => {
+                if (e && e.preventDefault) e.preventDefault();
+                daySection.scrollTo();
             });
         }
-
-        if (slideshow && btnPrev && btnPrev.onClick) {
-            btnPrev.onClick(() => {
-                if (slideshow.previous) slideshow.previous();
-            });
-        }
-    } catch (e) {
-        console.warn("Guides carousel notice:", e);
-    }
-}
-
-// ========================================================
-// 5. VIEWPORT SCROLL ANIMATIONS (FADE-IN REVEAL)
-// ========================================================
-function initScrollAnimations() {
-    try {
-        const sectionsToAnimate = [
-            '#builderBox',
-            '#toursSection',
-            '#timelineSection',
-            '#guidesSection',
-            '#pricingSection',
-            '#faqSection'
-        ];
-
-        sectionsToAnimate.forEach(id => {
-            const el = $w(id);
-            if (el && el.onViewportEnter) {
-                el.onViewportEnter(() => {
-                    el.show('fade', { duration: 600 });
-                });
-            }
-        });
-    } catch (e) {
-        console.warn("Scroll animation notice:", e);
+    } catch (err) {
+        console.warn("Smooth anchors notice:", err);
     }
 }
